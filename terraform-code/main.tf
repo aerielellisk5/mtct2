@@ -5,19 +5,23 @@ resource "random_id" "random" {
 
 
 resource "github_repository" "mtc_repo_a" {
-  count       = var.repo_count
-  name        = "mtc-repo-${random_id.random[count.index].dec}"
-  description = "Code for MTCa"
-  visibility  = "private"
+  # count       = var.repo_count
+  for_each = toset(["infra","backend"])
+  # name        = "mtc-repo-${random_id.random[count.index].dec}"
+  name        = "mtc-repo-${each.key}"
+  description = "${each.value} Code for MTCa"
+  visibility  = var.env == "dev" ? "private" : "public"
   auto_init   = true
 }
 
 resource "github_repository_file" "readme" {
-  count               = var.repo_count
-  repository          = github_repository.mtc_repo_a[count.index].name
+  # count               = var.repo_count
+  # repository          = github_repository.mtc_repo_a[count.index].name
+  for_each = var.repos
+  repository =  github_repository.mtc_repo_a[each.key].name
   branch              = "main"
   file                = "README.md"
-  content             = " # This is a repo for infra developers"
+  content             = " # This ${var.env} is a repo for infra developers"
   overwrite_on_create = true
 }
 
@@ -29,8 +33,9 @@ resource "github_repository_file" "readme" {
 # # # 5. hello terraform!
 
 resource "github_repository_file" "index" {
-  count               = var.repo_count
-  repository          = github_repository.mtc_repo_a[count.index].name
+  # count               = var.repo_count
+  for_each = var.repos
+  repository          = github_repository.mtc_repo_a[each.key].name
   branch              = "main"
   file                = "index.html"
   content             = "Hello Terraform!"
@@ -48,3 +53,8 @@ output "clone-urls" {
   description = "Repo names and URLS"
   sensitive   = false
 }
+
+# output "varsource" {
+#   value = var.varsource
+#   description = "Source being used to source variable definition"
+# }
